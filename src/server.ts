@@ -1,6 +1,6 @@
-import { app } from "./app";
 import * as dotenv from "dotenv";
-import { connectDB } from "./config/connectDb";
+import { app } from "./app";
+import { connectDB } from "./config/connectDB";
 const PORT = process.env.PORT || 4000;
 
 // Handle uncaught Exception
@@ -10,7 +10,6 @@ process.on("uncaughtException", (err) => {
 });
 
 // config
-console.log(process.cwd());
 if (process.env.NODE_ENV !== "production") {
   dotenv.config({
     path: "./src/config/.env",
@@ -18,7 +17,6 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // connect to database
-console.log(process.env.PORT);
 connectDB();
 
 // create server
