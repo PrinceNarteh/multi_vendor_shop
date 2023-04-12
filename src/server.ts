@@ -1,5 +1,6 @@
 import { app } from "./app";
-import { config } from "dotenv";
+import * as dotenv from "dotenv";
+import { connectDB } from "./config/connectDb";
 const PORT = process.env.PORT || 4000;
 
 // Handle uncaught Exception
@@ -9,11 +10,16 @@ process.on("uncaughtException", (err) => {
 });
 
 // config
+console.log(process.cwd());
 if (process.env.NODE_ENV !== "production") {
-  config({
-    path: "./config/.env",
+  dotenv.config({
+    path: "./src/config/.env",
   });
 }
+
+// connect to database
+console.log(process.env.PORT);
+connectDB();
 
 // create server
 const server = app.listen(PORT, () => {
