@@ -19,6 +19,6 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // Error handling
-app.use(ErrorHandler);
+// app.use(ErrorHandler);
 
 export { app };
