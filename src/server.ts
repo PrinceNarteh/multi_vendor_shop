@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 import { app } from "./app";
-import { connectDB } from "./config/connectDB";
+import { connectDB } from "./lib/db";
 const PORT = process.env.PORT || 4000;
 
 // Handle uncaught Exception
