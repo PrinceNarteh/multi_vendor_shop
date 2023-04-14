@@ -1,9 +1,10 @@
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import * as dotenv from "dotenv";
-import * as express from "express";
+import dotenv from "dotenv";
+import express from "express";
 import fileUpload from "express-fileupload";
 import ErrorHandler from "./utils/errorHandler";
+import { authRouter } from "./modules/users/user.routes";
 
 const app = express();
 
@@ -13,10 +14,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload({ useTempFiles: true }));
 
 if (process.env.NODE_ENV !== "production") {
-  dotenv.config({
-    path: "./src/config/.env",
-  });
+  dotenv.config();
 }
+
+app.use("/auth", authRouter);
 
 // Error handling
 // app.use(ErrorHandler);
