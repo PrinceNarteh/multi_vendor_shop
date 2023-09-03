@@ -1,11 +1,12 @@
 import Router from "./routes";
 import "./App.css";
+import Provider from "./components/provider";
 
 function App() {
   return (
-    <div>
+    <Provider>
       <Router />
-    </div>
+    </Provider>
   );
 }
 

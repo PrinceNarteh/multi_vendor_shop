@@ -1,13 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { server } from "../../server";
+import useFetch from "../hooks/useFetch";
 import styles from "../styles";
+
+interface FormData {
+  email: string;
+  password: string;
+}
 
 const schema = z.object({
   email: z.string({ required_error: "email is required" }).email(),
@@ -21,7 +26,7 @@ const Login = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormData>({
     defaultValues: {
       email: "",
       password: "",
@@ -31,26 +36,21 @@ const Login = () => {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
 
-  const submit = async (e) => {
-    e.preventDefault();
-
-    await axios
-      .post(
-        `${server}/user/login-user`,
-        {
-          email,
-          password,
-        },
-        { withCredentials: true }
-      )
-      .then((res) => {
-        toast.success("Login Success!");
-        navigate("/");
-        window.location.reload(true);
-      })
-      .catch((err) => {
-        toast.error(err.response.data.message);
-      });
+  const fetch = useFetch();
+  const { mutate } = useMutation({
+    mutationKey: ["login"],
+    mutationFn: fetch,
+  });
+  const submit: SubmitHandler<FormData> = (data) => {
+    const toastId = toast.loading("Logging in...");
+    mutate(
+      {
+        url: "",
+        method: "POST",
+        data,
+      },
+      { onSuccess(data, variables, context) {} }
+    );
   };
 
   return (
@@ -89,12 +89,9 @@ const Login = () => {
               <div className="mt-1 relative">
                 <input
                   type={visible ? "text" : "password"}
-                  name="password"
                   autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  {...register("password", { required: true })}
                 />
                 {visible ? (
                   <AiOutlineEye
