@@ -1,4 +1,6 @@
-import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import bcrypt from 'bcryptjs';
+import { Document, Model } from 'mongoose';
 
 @Schema()
 export class User {
@@ -31,6 +33,31 @@ export class User {
   })
   avatar: string;
 }
-export type UserDocument = User & Document;
-export const UserSchema = SchemaFactory.createForClass(User);
+
 export const USER_MODEL = User.name;
+export const UserSchema = SchemaFactory.createForClass(User);
+export type UserDocument = User & Document;
+export interface IUserModel extends Model<UserDocument> {
+  findByEmailAndPassword: (
+    email: string,
+    password: string,
+  ) => Promise<UserDocument>;
+}
+
+UserSchema.statics.findByEmailAndPassword = async function (
+  email: string,
+  password: string,
+) {
+  const user = await this.findOne({ email });
+  if (!user || !(await bcrypt.compare(password, user.password))) return;
+  return user;
+};
+
+UserSchema.pre('save', async function (next) {
+  const user = this as UserDocument;
+  if (user.isModified('password')) {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    user.password = hashedPassword;
+  }
+  next();
+});
