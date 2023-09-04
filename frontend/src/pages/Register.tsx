@@ -1,46 +1,76 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { SubmitHandler, useForm, FormProvider } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import styles from "../../styles/styles";
-import { Link } from "react-router-dom";
 import { RxAvatar } from "react-icons/rx";
-import axios from "axios";
-import { server } from "../../server";
-import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
+import { z } from "zod";
+import InputField from "../components/shared/InputField";
+import useFetch from "../hooks/useFetch";
+import styles from "../styles";
+
+interface IForm {
+  name: string;
+  email: string;
+  password: string;
+}
+
+const schema = z.object({
+  name: z
+    .string({ required_error: "name is required" })
+    .min(1, "name cannot be empty"),
+  email: z.string({ required_error: "email is required" }).email(),
+  password: z
+    .string({ required_error: "password is required" })
+    .min(6, "password must be at least 6 characters long"),
+});
 
 const Register = () => {
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
+  const method = useForm<IForm>({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+    resolver: zodResolver(schema),
+  });
   const [visible, setVisible] = useState(false);
-  const [avatar, setAvatar] = useState(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
 
-  const handleFileInputChange = (e) => {
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+
     const reader = new FileReader();
 
     reader.onload = () => {
       if (reader.readyState === 2) {
-        setAvatar(reader.result);
+        setAvatar(reader.result as string);
       }
     };
 
     reader.readAsDataURL(e.target.files[0]);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    axios
-      .post(`${server}/user/create-user`, { name, email, password, avatar })
-      .then((res) => {
-        toast.success(res.data.message);
-        setName("");
-        setEmail("");
-        setPassword("");
-        setAvatar();
-      })
-      .catch((error) => {
-        toast.error(error.response.data.message);
-      });
+  const fetch = useFetch();
+  const { mutate } = useMutation({
+    mutationKey: ["login"],
+    mutationFn: fetch,
+  });
+  const submit: SubmitHandler<IForm> = (data) => {
+    const toastId = toast.loading("Logging in...");
+    mutate(
+      {
+        url: "",
+        method: "POST",
+        data,
+      },
+      { onSuccess(data, variables, context) {} }
+    );
   };
+
+  console.log(method.formState.errors);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -51,129 +81,110 @@ const Register = () => {
       </div>
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Full Name
-              </label>
-              <div className="mt-1">
-                <input
-                  type="text"
-                  name="text"
-                  autoComplete="name"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
+          <FormProvider {...method}>
+            <form className="space-y-6" onSubmit={method.handleSubmit(submit)}>
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Full Name
+                </label>
+                <div className="mt-1">
+                  <InputField name="name" autoComplete="name" />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email address
+                </label>
+                <div className="mt-1">
+                  <InputField type="email" name="email" />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  type={visible ? "text" : "password"}
-                  name="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-                {visible ? (
-                  <AiOutlineEye
-                    className="absolute right-2 top-2 cursor-pointer"
-                    size={25}
-                    onClick={() => setVisible(false)}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Password
+                </label>
+                <div className="mt-1 relative">
+                  <InputField
+                    type={visible ? "text" : "password"}
+                    name="password"
                   />
-                ) : (
-                  <AiOutlineEyeInvisible
-                    className="absolute right-2 top-2 cursor-pointer"
-                    size={25}
-                    onClick={() => setVisible(true)}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="avatar"
-                className="block text-sm font-medium text-gray-700"
-              ></label>
-              <div className="mt-2 flex items-center">
-                <span className="inline-block h-8 w-8 rounded-full overflow-hidden">
-                  {avatar ? (
-                    <img
-                      src={avatar}
-                      alt="avatar"
-                      className="h-full w-full object-cover rounded-full"
+                  {visible ? (
+                    <AiOutlineEye
+                      className="absolute right-2 top-2 cursor-pointer"
+                      size={25}
+                      onClick={() => setVisible(false)}
                     />
                   ) : (
-                    <RxAvatar className="h-8 w-8" />
+                    <AiOutlineEyeInvisible
+                      className="absolute right-2 top-2 cursor-pointer"
+                      size={25}
+                      onClick={() => setVisible(true)}
+                    />
                   )}
-                </span>
-                <label
-                  htmlFor="file-input"
-                  className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <span>Upload a file</span>
-                  <input
-                    type="file"
-                    name="avatar"
-                    id="file-input"
-                    accept=".jpg,.jpeg,.png"
-                    onChange={handleFileInputChange}
-                    className="sr-only"
-                  />
-                </label>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <button
-                type="submit"
-                className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Submit
-              </button>
-            </div>
-            <div className={`${styles.noramlFlex} w-full`}>
-              <h4>Already have an account?</h4>
-              <Link to="/login" className="text-blue-600 pl-2">
-                Sign In
-              </Link>
-            </div>
-          </form>
+              <div>
+                <label
+                  htmlFor="avatar"
+                  className="block text-sm font-medium text-gray-700"
+                ></label>
+                <div className="mt-2 flex items-center">
+                  <span className="inline-block h-8 w-8 rounded-full overflow-hidden">
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt="avatar"
+                        className="h-full w-full object-cover rounded-full"
+                      />
+                    ) : (
+                      <RxAvatar className="h-8 w-8" />
+                    )}
+                  </span>
+                  <label
+                    htmlFor="file-input"
+                    className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <span>Upload a file</span>
+                    <input
+                      type="file"
+                      name="avatar"
+                      id="file-input"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={(e) => handleFileInputChange(e)}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Submit
+                </button>
+              </div>
+              <div className={`${styles.normalFlex} w-full`}>
+                <h4>Already have an account?</h4>
+                <Link to="/login" className="text-blue-600 pl-2">
+                  Sign In
+                </Link>
+              </div>
+            </form>
+          </FormProvider>
         </div>
       </div>
     </div>
