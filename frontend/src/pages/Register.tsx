@@ -1,20 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { SubmitHandler, useForm, FormProvider } from "react-hook-form";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { RxAvatar } from "react-icons/rx";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import InputField from "../components/shared/InputField";
-import useFetch from "../hooks/useFetch";
 import styles from "../styles";
+import useMutate from "../hooks/useMutate";
 
 interface IForm {
   name: string;
   email: string;
   password: string;
+  avatar: string | null;
 }
 
 const schema = z.object({
@@ -28,16 +28,19 @@ const schema = z.object({
 });
 
 const Register = () => {
+  const { mutate } = useMutate(["register"]);
   const method = useForm<IForm>({
     defaultValues: {
       name: "",
       email: "",
       password: "",
+      avatar: null,
     },
     resolver: zodResolver(schema),
   });
   const [visible, setVisible] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [image, setImage] = useState<File | null>(null);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -51,22 +54,34 @@ const Register = () => {
     };
 
     reader.readAsDataURL(e.target.files[0]);
+    setImage(e.target.files[0]);
   };
 
-  const fetch = useFetch();
-  const { mutate } = useMutation({
-    mutationKey: ["login"],
-    mutationFn: fetch,
-  });
   const submit: SubmitHandler<IForm> = (data) => {
     const toastId = toast.loading("Logging in...");
+
+    const formData = new FormData();
+    Object.entries(data).forEach((entry) => {
+      formData.append(...entry);
+    });
+    if (image) formData.append("avatar", image);
     mutate(
       {
-        url: "",
+        url: "/auth/register",
         method: "POST",
-        data,
+        data: formData,
+        multipart: true,
       },
-      { onSuccess(data, variables, context) {} }
+      {
+        onSuccess(data, variables, context) {
+          toast.dismiss(toastId);
+          toast.success("Registration successful");
+        },
+        onError(error: any) {
+          toast.dismiss(toastId);
+          toast.error(error.response.data.message);
+        },
+      }
     );
   };
 
