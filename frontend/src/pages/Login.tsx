@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -7,7 +6,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import InputField from "../components/shared/InputField";
-import useFetch from "../hooks/useFetch";
+import useMutate from "../hooks/useMutate";
 import styles from "../styles";
 
 interface FormData {
@@ -23,6 +22,7 @@ const schema = z.object({
 });
 
 const Login = () => {
+  const { mutate } = useMutate(["login"]);
   const methods = useForm<FormData>({
     defaultValues: {
       email: "",
@@ -33,20 +33,21 @@ const Login = () => {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
 
-  const fetch = useFetch();
-  const { mutate } = useMutation({
-    mutationKey: ["login"],
-    mutationFn: fetch,
-  });
   const submit: SubmitHandler<FormData> = (data) => {
     const toastId = toast.loading("Logging in...");
     mutate(
       {
-        url: "",
+        url: "/auth/login",
         method: "POST",
         data,
       },
-      { onSuccess(data, variables, context) {} }
+      {
+        onSuccess(data, variables, context) {
+          console.log(data);
+          toast.dismiss(toastId);
+          toast.success("Login Successful");
+        },
+      }
     );
   };
 

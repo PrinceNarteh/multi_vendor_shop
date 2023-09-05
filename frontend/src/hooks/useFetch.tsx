@@ -27,7 +27,7 @@ export const useFetch = () => {
     },
   }: Props) => {
     const res = await axios({
-      url,
+      url: `http://localhost:4000${url}`,
       method,
       data,
       headers: {
