@@ -14,4 +14,8 @@ export class AuthService {
     }
     return this.usersService.create(userDto);
   }
+
+  async login(email: string, password: string): Promise<UserDocument> {
+    return this.usersService.findByEmailAndPassword(email, password);
+  }
 }

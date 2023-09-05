@@ -48,7 +48,7 @@ UserSchema.statics.findByEmailAndPassword = async function (
   email: string,
   password: string,
 ) {
-  const user = await this.findOne({ email });
+  const user = await this.findOne({ email }, '+password');
   if (!user || !(await bcrypt.compare(password, user.password))) return;
   return user;
 };

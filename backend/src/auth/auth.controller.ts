@@ -9,7 +9,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateUserDto } from 'src/users/dto/users.dto';
+import { CreateUserDto, LoginDto } from 'src/users/dto/users.dto';
 import { AuthService } from './auth.service';
 import { storageConfig } from 'src/common/multer.storage';
 
@@ -36,5 +36,10 @@ export class AuthController {
       avatar: file.filename,
     };
     return this.authService.register(data);
+  }
+
+  @Post('login')
+  login(@Body() userDto: LoginDto) {
+    return this.authService.login(userDto.email, userDto.password);
   }
 }

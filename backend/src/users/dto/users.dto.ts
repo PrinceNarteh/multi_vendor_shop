@@ -18,3 +18,15 @@ export class CreateUserDto {
   // @IsNotEmpty()
   // avatar: string;
 }
+
+export class LoginDto {
+  @IsNotEmpty()
+  @IsString()
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  password: string;
+}
