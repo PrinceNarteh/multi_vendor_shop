@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString, IsEmail, MinLength } from 'class-validator';
+import { IsFile } from 'src/common/is-file.validation';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -16,7 +17,11 @@ export class CreateUserDto {
   password: string;
 
   // @IsNotEmpty()
-  // avatar: string;
+  // @IsFile(
+  //   { mime: ['image/jpg', 'image/png'] },
+  //   { message: 'avatar is required' },
+  // )
+  avatar: any;
 }
 
 export class LoginDto {

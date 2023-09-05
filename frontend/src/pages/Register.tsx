@@ -58,13 +58,19 @@ const Register = () => {
   };
 
   const submit: SubmitHandler<IForm> = (data) => {
-    const toastId = toast.loading("Logging in...");
+    if (!image) {
+      toast.error("Please select profile image");
+      return;
+    }
 
+    const toastId = toast.loading("Registering user...");
     const formData = new FormData();
     Object.entries(data).forEach((entry) => {
       formData.append(...entry);
     });
-    if (image) formData.append("avatar", image);
+
+    formData.append("avatar", image);
+
     mutate(
       {
         url: "/auth/register",
@@ -78,6 +84,7 @@ const Register = () => {
           toast.success("Registration successful");
         },
         onError(error: any) {
+          console.log(error);
           toast.dismiss(toastId);
           toast.error(error.response.data.message);
         },
